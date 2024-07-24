@@ -9,6 +9,8 @@ import sqlite3
 from datetime import datetime
 from pprint import pprint
 
+# todo: add file to install correct python libs
+
 from pynostr.key import PrivateKey
 from pynostr.relay_manager import RelayManager
 from pynostr.event import Event, EventKind
