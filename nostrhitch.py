@@ -6,7 +6,7 @@ import uuid
 import requests
 import sqlite3
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pprint
 
 from pynostr.key import PrivateKey
@@ -40,13 +40,14 @@ def fetch_data_from_db(filename, query):
 
     for row in results:
         np.post(row)
-    np.close()
     
     conn.close()
     
 
 def main():
     today = datetime.today().strftime('%Y-%m-%d')
+    yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+
     filename = f'hitchmap_{today}.sqlite'
     url = 'https://hitchmap.com/dump.sqlite'
     print ("nostr hitch: putting hitchmap data into nostr, and thus on notes.trustroots.org")
@@ -56,7 +57,7 @@ def main():
     else:
         print(f"File '{filename}' already exists.")
 
-    query = f"SELECT * FROM points WHERE datetime > '{today}'"
+    query = f"SELECT * FROM points WHERE datetime > '{yesterday}'"
     fetch_data_from_db(filename, query)
 
 class NostrPost:
