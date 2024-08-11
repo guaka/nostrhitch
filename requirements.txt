@@ -1,0 +1,4 @@
+requests
+pynostr
+openlocationcode
+geohash2
