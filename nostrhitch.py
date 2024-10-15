@@ -9,8 +9,6 @@ import sqlite3
 from datetime import datetime, timedelta
 from pprint import pprint
 
-# todo: add file to install correct python libs
-
 from pynostr.key import PrivateKey
 from pynostr.relay_manager import RelayManager
 from pynostr.event import Event, EventKind
@@ -21,7 +19,7 @@ import geohash2
 import settings
 
 
-def download_file(url, filename):
+def download_hitchmap_data(url, filename):
     print ("Downloading", url)
     response = requests.get(url)
     if response.status_code == 200:
@@ -31,7 +29,7 @@ def download_file(url, filename):
     else:
         print("Failed to fetch the page, status code:", response.status_code)
 
-def fetch_data_from_db(filename, query):
+def fetch_data_from_hitchmapdb(filename, query):
     conn = sqlite3.connect(filename)
     cursor = conn.cursor()
     print (query)
@@ -48,19 +46,20 @@ def fetch_data_from_db(filename, query):
 
 def main():
     today = datetime.today().strftime('%Y-%m-%d')
-    yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+    earlier = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
 
     filename = f'hitchmap_{today}.sqlite'
     url = 'https://hitchmap.com/dump.sqlite'
     print ("nostr hitch: putting hitchmap data into nostr, and thus on notes.trustroots.org")
 
     if not os.path.exists(filename):
-        download_file(url, filename)
+        print("Downloading latest hitchmap data")
+        download_hitchmap_data(url, filename)
     else:
         print(f"File '{filename}' already exists.")
 
-    query = f"SELECT * FROM points WHERE datetime > '{yesterday}'"
-    fetch_data_from_db(filename, query)
+    query = f"SELECT * FROM points WHERE datetime > '{earlier}'"
+    fetch_data_from_hitchmapdb(filename, query)
 
 class NostrPost:
     def __init__(self):
@@ -68,6 +67,16 @@ class NostrPost:
         self.private_key_hex = private_key_obj.hex()
         npub = private_key_obj.public_key.bech32()
         print(f"Posting as npub {npub}")
+
+        self.nh_conn = sqlite3.connect("nostrhitch.sqlite")
+        self.nh_cursor = self.nh_conn.cursor()
+        self.nh_cursor.execute("""
+            CREATE TABLE IF NOT EXISTS posted_hitchmap_ids (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hitchmap_id TEXT NOT NULL
+            )
+        """)
+
 
         self.relay_url = settings.relay
 
@@ -79,9 +88,7 @@ class NostrPost:
         print(hitchnote)
 
         # (3312039017314494891, 46.55134501890075, 0.401676893234253, 4.0, 'FR', 5.0, 'Anonyme', "On peut attendre 5 minutes comme une demie heure. Mais entre le rond point et la station total c'est pas mal, il y a des endroits pour s'arrêter..", '2024-10-14 09:58:11.703127', 0, 0, '', 46.55134501890075, 0.401676893234253, None, None)
-        # (8820951577709421825, 22.616731011815194, 121.00915170046848, 5.0, 'TW', 3.0, None, 'Easy spot to get pickup to taitung city directions.', '2023-07-23 01:09:07.200078', 0, 0, '', 22.616731011815194, 121.00915170046848, None)
-        # (8565933277527005132, 43.891100365756145, 10.824542641639711, 5.0, 'IT', 10.0, 'hiker', 'perfect spot, got a ride to Massa very fast', '2023-07-23 10:05:52.361882', 0, 0, '', 43.92799682112012, 10.224226713180544, None)
-        col1, start_lat, start_lng, rating, country, col6, hitchhiker_name, desc, datetime, col10, col11, end_lat, end_lng, col13, col14, col15 = hitchnote
+        hitchmap_id, start_lat, start_lng, rating, country, col6, hitchhiker_name, desc, datetime, col10, col11, end_lat, end_lng, col13, col14, col15 = hitchnote
 
         if not hitchhiker_name:
             hitchhiker_name = ''
@@ -102,14 +109,22 @@ class NostrPost:
         # todo: ['created_at', timestamp] with datetime from hitchmap date
         
         event.sign(self.private_key_hex)
-        pprint(vars(event))
+        
+        self.nh_cursor.execute("SELECT COUNT(*) FROM posted_hitchmap_ids WHERE hitchmap_id = ?", (hitchmap_id,))
+        if self.nh_cursor.fetchone()[0] == 0:
+            print('vars(event)')
+            pprint(vars(event))
 
-        if False:
-            self.relay_manager.publish_event(event)
-            self.relay_manager.run_sync()  # Synchronize with the relay to send the event
-
-        # Wait a bit to ensure the message has been sent
-        time.sleep(5)
+            if settings.post_to_relays:
+                print("posting to relays")
+                self.relay_manager.publish_event(event)
+                self.relay_manager.run_sync()  # Sync with the relay to send the event
+                self.nh_cursor.execute("INSERT INTO posted_hitchmap_ids (hitchmap_id) VALUES (?)", (hitchmap_id,))
+                self.nh_conn.commit()  # Commit the transaction to save the changes to the database
+                # Wait a bit to ensure the message has been sent
+                time.sleep(3)
+        else:
+            print("already posted")
 
     def close():
         self.relay_manager.close_all_relay_connections()

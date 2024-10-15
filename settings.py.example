@@ -1,0 +1,7 @@
+# can be helpful to add your npub in the comments
+nsec = "#your nsec here"
+
+# You can set this to False to avoid posting to relays
+post_to_relays = True
+
+relay = "wss://relay.damus.io"
