@@ -18,7 +18,7 @@ from pynostr.event import Event, EventKind
 from openlocationcode import openlocationcode
 import geohash2
 
-from settings import nsec
+import settings
 
 
 def download_file(url, filename):
@@ -64,12 +64,12 @@ def main():
 
 class NostrPost:
     def __init__(self):
-        private_key_obj = PrivateKey.from_nsec(nsec)
+        private_key_obj = PrivateKey.from_nsec(settings.nsec)
         self.private_key_hex = private_key_obj.hex()
         npub = private_key_obj.public_key.bech32()
         print(f"Posting as npub {npub}")
 
-        self.relay_url = "wss://nos.lol"
+        self.relay_url = settings.relay
 
         # Initialize the relay manager
         self.relay_manager = RelayManager(timeout=5)
@@ -77,9 +77,11 @@ class NostrPost:
 
     def post(self, hitchnote):
         print(hitchnote)
+
+        # (3312039017314494891, 46.55134501890075, 0.401676893234253, 4.0, 'FR', 5.0, 'Anonyme', "On peut attendre 5 minutes comme une demie heure. Mais entre le rond point et la station total c'est pas mal, il y a des endroits pour s'arrêter..", '2024-10-14 09:58:11.703127', 0, 0, '', 46.55134501890075, 0.401676893234253, None, None)
         # (8820951577709421825, 22.616731011815194, 121.00915170046848, 5.0, 'TW', 3.0, None, 'Easy spot to get pickup to taitung city directions.', '2023-07-23 01:09:07.200078', 0, 0, '', 22.616731011815194, 121.00915170046848, None)
         # (8565933277527005132, 43.891100365756145, 10.824542641639711, 5.0, 'IT', 10.0, 'hiker', 'perfect spot, got a ride to Massa very fast', '2023-07-23 10:05:52.361882', 0, 0, '', 43.92799682112012, 10.224226713180544, None)
-        col1, start_lat, start_lng, rating, country, col6, hitchhiker_name, desc, datetime, col10, col11, end_lat, end_lng, col13, col14 = hitchnote
+        col1, start_lat, start_lng, rating, country, col6, hitchhiker_name, desc, datetime, col10, col11, end_lat, end_lng, col13, col14, col15 = hitchnote
 
         if not hitchhiker_name:
             hitchhiker_name = ''
