@@ -45,7 +45,7 @@ def fetch_data_from_hitchmapdb(filename, query):
 
 def main():
     today = datetime.today().strftime('%Y-%m-%d')
-    earlier = (datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d')
+    earlier = (datetime.today() - timedelta(days=2)).strftime('%Y-%m-%d')
 
     filename = f'hitchmap_{today}.sqlite'
     url = 'https://hitchmap.com/dump.sqlite'
@@ -120,7 +120,6 @@ class NostrPost:
                 self.relay_manager.run_sync()  # Sync with the relay to send the event
                 self.nh_cursor.execute("INSERT INTO posted_hitchmap_ids (hitchmap_id) VALUES (?)", (hitchmap_id,))
                 self.nh_conn.commit()  # Commit the transaction to save the changes to the database
-                # Wait a bit to ensure the message has been sent
                 print("posted, waiting a bit")
                 time.sleep(3)
         else:
