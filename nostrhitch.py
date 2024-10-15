@@ -121,6 +121,7 @@ class NostrPost:
                 self.nh_cursor.execute("INSERT INTO posted_hitchmap_ids (hitchmap_id) VALUES (?)", (hitchmap_id,))
                 self.nh_conn.commit()  # Commit the transaction to save the changes to the database
                 # Wait a bit to ensure the message has been sent
+                print("posted, waiting a bit")
                 time.sleep(3)
         else:
             print("already posted")
