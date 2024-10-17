@@ -4,4 +4,4 @@ nsec = "#your nsec here"
 # You can set this to False to avoid posting to relays
 post_to_relays = True
 
-relay = "wss://relay.damus.io"
+relays = ["wss://relay.damus.io", "wss://nos.lol"]

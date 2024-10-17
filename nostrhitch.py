@@ -77,11 +77,10 @@ class NostrPost:
         """)
 
 
-        self.relay_url = settings.relay
-
         # Initialize the relay manager
         self.relay_manager = RelayManager(timeout=5)
-        self.relay_manager.add_relay(self.relay_url)
+        for relay in settings.relays:
+            self.relay_manager.add_relay(relay)
 
     def post(self, hitchnote):
         print(hitchnote)
