@@ -91,15 +91,24 @@ class NostrPost:
         if not hitchhiker_name:
             hitchhiker_name = ''
         event_content = f"hitchmap.com {hitchhiker_name}: {desc}"
-        event_kind = 397 # notes.trustroots.org      # EventKind.TEXT_NOTE
+        event_kind = 30399
 
         pluscode = openlocationcode.encode(start_lat, start_lng)
         geohash = geohash2.encode(start_lat, start_lng)
-        # geohash = ...
+        
+        # see also https://github.com/Trustroots/nostroots/blob/main/docs/Events.md
         event = Event(kind=event_kind, content=event_content, tags=
                       [ 
                        ['L', "open-location-code"],
                        ['l', pluscode, "open-location-code"],
+                       ['L', "open-location-code-prefix"],
+                       ['l', pluscode[:6]+"00+", "open-location-code-prefix"],
+                       ['L', "open-location-code-prefix"],
+                       ['l', pluscode[:4]+"0000+", "open-location-code-prefix"],
+                       ['L', "open-location-code-prefix"],
+                       ['l', pluscode[:2]+"000000+", "open-location-code-prefix"],
+                       ['L', "trustroots-circle"],
+                       ['l', "hitchhikers", "trustroots-circle"],
                        ['g', geohash],
                        ['t', 'hitchmap' ],
                        ['t', 'map-notes' ],
