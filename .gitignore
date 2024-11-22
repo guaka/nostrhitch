@@ -3,3 +3,4 @@ venv/
 settings.py
 *.sqlite
 *.log
+OLD/

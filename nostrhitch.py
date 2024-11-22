@@ -45,12 +45,15 @@ def fetch_data_from_hitchmapdb(filename, query):
 
 def main():
     today = datetime.today().strftime('%Y-%m-%d')
-    earlier = (datetime.today() - timedelta(days=2)).strftime('%Y-%m-%d')
+    earlier = (datetime.today() - timedelta(days=12)).strftime('%Y-%m-%d')
 
-    filename = f'hitchmap_{today}.sqlite'
+    filename = f'hitchmap-dumps/hitchmap_{today}.sqlite'
     url = 'https://hitchmap.com/dump.sqlite'
     print ("nostr hitch: putting hitchmap data into nostr, and thus on notes.trustroots.org")
 
+    if not os.path.exists("hitchmap-dumps"):
+        os.mkdir("hitchmap-dumps")
+    
     if not os.path.exists(filename):
         print("Downloading latest hitchmap data")
         download_hitchmap_data(url, filename)
@@ -92,13 +95,16 @@ class NostrPost:
             hitchhiker_name = ''
         event_content = f"hitchmap.com {hitchhiker_name}: {desc}"
         event_kind = 30399
+        hitchmap_id = str(int(hitchmap_id))
 
         pluscode = openlocationcode.encode(start_lat, start_lng)
         geohash = geohash2.encode(start_lat, start_lng)
-        
+
+        print ('qweoijkqwewq', hitchmap_id)
         # see also https://github.com/Trustroots/nostroots/blob/main/docs/Events.md
         event = Event(kind=event_kind, content=event_content, tags=
-                      [ 
+                      [
+                       ['d', hitchmap_id],
                        ['L', "open-location-code"],
                        ['l', pluscode, "open-location-code"],
                        ['L', "open-location-code-prefix"],
